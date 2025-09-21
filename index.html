@@ -146,6 +146,7 @@
                 if (response.ok) {
                     timesheets = await response.json();
                     timesheets = timesheets.map(sheet => ({
+                        id: sheet.id, 
                         name: sheet.name,
                         start: sheet.start_time,
                         end: sheet.end_time,
@@ -210,8 +211,8 @@
             
             const entry = {
                 name: currentSession.name,
-                start: currentSession.startTime.toLocaleString(),
-                end: companyEndTime.toLocaleString(),
+                start: currentSession.startTime.toISOString(),
+                end: companyEndTime.toISOString(),
                 minutes: duration
             };
 
@@ -252,8 +253,7 @@
 
             filteredSheets.forEach(sheet => {
                 const div = document.createElement('div');
-                div.innerHTML = `${sheet.name} - ${sheet.start} to ${sheet.end} (${sheet.minutes} mins)<br>`;
-                container.appendChild(div);
+                div.innerHTML = `${sheet.name} - ${new Date(sheet.start).toLocaleString()} to ${new Date(sheet.end).toLocaleString()} (${sheet.minutes} mins)<br>`;                container.appendChild(div);
             });
 
             displayWeeklyTotals();

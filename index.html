@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>timesheet thing</title>
+</head>
+<body>
+    <h1>work tracker</h1>
+    
+    <div id="nameInput">
+        <input type="text" id="name" placeholder="your name">
+        <button onclick="startWork()">start</button>
+    </div>
+    
+    <div id="workingState" style="display:none;">
+        <p>working: <span id="currentName"></span></p>
+        <p>started: <span id="startTime"></span></p>
+        <button onclick="endWork()">end</button>
+    </div>
+    
+    <h2>timesheets</h2>
+    <div id="timesheets"></div>
+
+    <script>
+        let timesheets = JSON.parse(localStorage.getItem('timesheets') || '[]');
+        let currentSession = JSON.parse(localStorage.getItem('currentSession') || 'null');
+
+        // restore session on load
+        if (currentSession) {
+            currentSession.startTime = new Date(currentSession.startTime);
+            document.getElementById('nameInput').style.display = 'none';
+            document.getElementById('workingState').style.display = 'block';
+            document.getElementById('currentName').textContent = currentSession.name;
+            document.getElementById('startTime').textContent = currentSession.startTime.toLocaleString();
+        }
+
+        displayTimesheets();
+
+        function startWork() {
+            const name = document.getElementById('name').value;
+            if (!name) return;
+            
+            const startTime = new Date();
+            currentSession = { name, startTime };
+            localStorage.setItem('currentSession', JSON.stringify(currentSession));
+            
+            document.getElementById('nameInput').style.display = 'none';
+            document.getElementById('workingState').style.display = 'block';
+            document.getElementById('currentName').textContent = name;
+            document.getElementById('startTime').textContent = startTime.toLocaleString();
+            document.getElementById('name').value = '';
+        }
+
+        function endWork() {
+            if (!currentSession) return;
+            
+            const endTime = new Date();
+            const duration = Math.round((endTime - currentSession.startTime) / 1000 / 60);
+            
+            timesheets.push({
+                name: currentSession.name,
+                start: currentSession.startTime.toLocaleString(),
+                end: endTime.toLocaleString(),
+                minutes: duration
+            });
+            
+            localStorage.setItem('timesheets', JSON.stringify(timesheets));
+            localStorage.removeItem('currentSession');
+            
+            currentSession = null;
+            document.getElementById('nameInput').style.display = 'block';
+            document.getElementById('workingState').style.display = 'none';
+            
+            displayTimesheets();
+        }
+
+        function displayTimesheets() {
+            const container = document.getElementById('timesheets');
+            container.innerHTML = '';
+            
+            timesheets.forEach(sheet => {
+                const div = document.createElement('div');
+                div.innerHTML = `${sheet.name} - ${sheet.start} to ${sheet.end} (${sheet.minutes} mins)<br>`;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>

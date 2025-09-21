@@ -6,6 +6,12 @@
 <body>
     <h1>work tracker</h1>
     
+    <!-- Add your Supabase details here -->
+    <script>
+        const SUPABASE_URL = 'https://agjdexqndumwhrinvpxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnamRleHFuZHVtd2hyaW52cHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MjI2MzEsImV4cCI6MjA3Mzk5ODYzMX0.EFgk42kWdO2gi2yK8DnLZaMzUlPzZT3jIC3g9ZlK4Z4';
+    </script>
+    
     <div id="nameButtons">
         <button onclick="startWork('Don')">Don</button>
         <button onclick="startWork('Ten')">Ten</button>
@@ -19,12 +25,12 @@
         <p>started: <span id="startTime"></span></p>
         <button onclick="endWork()">end</button>
     </div>
+    
     <h2>weekly totals</h2>
     <select id="weekFilterTotals" onchange="displayWeeklyTotals()">
         <option value="">all weeks</option>
     </select>
     <div id="weeklyTotals"></div>
-
     
     <h2>timesheets</h2>
     <select id="weekFilterTimesheets" onchange="displayTimesheets()">
@@ -36,7 +42,7 @@
     <div id="overallTotals"></div>
 
     <script>
-        let timesheets = JSON.parse(localStorage.getItem('timesheets') || '[]');
+        let timesheets = [];
         let currentSession = JSON.parse(localStorage.getItem('currentSession') || 'null');
 
         // restore session on load
@@ -48,7 +54,62 @@
             document.getElementById('startTime').textContent = currentSession.startTime.toLocaleString();
         }
 
-        displayTimesheets();
+        loadTimesheets();
+
+        async function loadTimesheets() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/timesheets?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                if (response.ok) {
+                    timesheets = await response.json();
+                    timesheets = timesheets.map(sheet => ({
+                        name: sheet.name,
+                        start: sheet.start_time,
+                        end: sheet.end_time,
+                        minutes: sheet.minutes
+                    }));
+                }
+                displayTimesheets();
+            } catch (error) {
+                console.error('Error loading timesheets:', error);
+                displayTimesheets();
+            }
+        }
+
+        async function saveTimesheet(entry) {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/timesheets`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        name: entry.name,
+                        start_time: entry.start,
+                        end_time: entry.end,
+                        minutes: entry.minutes
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('Saved to database');
+                    loadTimesheets(); // reload to get latest data
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error saving timesheet:', error);
+                alert('Failed to save timesheet entry');
+            }
+        }
 
         function startWork(name) {
             const startTime = new Date();
@@ -69,31 +130,28 @@
             const companyEndTime = new Date(endTime.toLocaleString("en-US", {timeZone: "Asia/Shanghai"}));
             const duration = Math.round((companyEndTime - currentSession.startTime) / 1000 / 60);
             
-            timesheets.push({
+            const entry = {
                 name: currentSession.name,
                 start: currentSession.startTime.toLocaleString(),
                 end: companyEndTime.toLocaleString(),
                 minutes: duration
-            });
-            
-            localStorage.setItem('timesheets', JSON.stringify(timesheets));
+            };
+
+            saveTimesheet(entry);
             localStorage.removeItem('currentSession');
             
             currentSession = null;
             document.getElementById('nameButtons').style.display = 'block';
             document.getElementById('workingState').style.display = 'none';
-            
-            displayTimesheets();
         }
 
         function displayTimesheets() {
             const container = document.getElementById('timesheets');
-            const weekFilter = document.getElementById('weekFilterTimesheets'); // ✅ new ID
+            const weekFilter = document.getElementById('weekFilterTimesheets');
             const selectedWeek = weekFilter.value;
 
             container.innerHTML = '';
             
-            // Update week dropdown options
             const weeks = [...new Set(timesheets.map(sheet => {
                 const startDate = new Date(sheet.start);
                 return getWeekStart(startDate).toDateString();
@@ -108,7 +166,6 @@
                 weekFilter.appendChild(option);
             });
 
-            // Filter timesheets by selected week
             const filteredSheets = selectedWeek ? 
                 timesheets.filter(sheet => {
                     const startDate = new Date(sheet.start);
@@ -124,6 +181,56 @@
             displayWeeklyTotals();
             displayOverallTotals();
         }
+
+        function displayWeeklyTotals() {
+            const container = document.getElementById('weeklyTotals');
+            const weekFilter = document.getElementById('weekFilterTotals');
+            const selectedWeek = weekFilter.value;
+            container.innerHTML = '';
+
+            const weeklyTotals = {};
+
+            timesheets.forEach(sheet => {
+                const startDate = new Date(sheet.start);
+                const weekStart = getWeekStart(startDate);
+                const weekKey = weekStart.toDateString();
+
+                if (selectedWeek && weekKey !== selectedWeek) return;
+
+                const key = `${sheet.name}-${weekKey}`;
+                if (!weeklyTotals[key]) {
+                    weeklyTotals[key] = {
+                        name: sheet.name,
+                        weekStart: weekStart,
+                        minutes: 0
+                    };
+                }
+                weeklyTotals[key].minutes += sheet.minutes;
+            });
+
+            const weeks = [...new Set(timesheets.map(sheet => {
+                const startDate = new Date(sheet.start);
+                return getWeekStart(startDate).toDateString();
+            }))].sort();
+
+            weekFilter.innerHTML = '<option value="">all weeks</option>';
+            weeks.forEach(week => {
+                const option = document.createElement('option');
+                option.value = week;
+                option.textContent = `week of ${week}`;
+                if (week === selectedWeek) option.selected = true;
+                weekFilter.appendChild(option);
+            });
+
+            Object.values(weeklyTotals).forEach(total => {
+                const hours = Math.floor(total.minutes / 60);
+                const mins = total.minutes % 60;
+                const div = document.createElement('div');
+                div.innerHTML = `${total.name} - week of ${total.weekStart.toDateString()}: ${hours}h ${mins}m<br>`;
+                container.appendChild(div);
+            });
+        }
+
         function displayOverallTotals() {
             const container = document.getElementById('overallTotals');
             container.innerHTML = '';
@@ -145,79 +252,6 @@
                 container.appendChild(div);
             });
         }
-
-        function displayWeeklyTotals() {
-            const container = document.getElementById('weeklyTotals');
-            const weekFilter = document.getElementById('weekFilterTotals'); // ✅ use correct ID
-            const selectedWeek = weekFilter.value;
-            container.innerHTML = '';
-
-            const weeklyTotals = {};
-
-            timesheets.forEach(sheet => {
-                const startDate = new Date(sheet.start);
-                const weekStart = getWeekStart(startDate);
-                const weekKey = weekStart.toDateString();
-
-                // If a week is selected, skip other weeks
-                if (selectedWeek && weekKey !== selectedWeek) return;
-
-                const key = `${sheet.name}-${weekKey}`;
-                if (!weeklyTotals[key]) {
-                    weeklyTotals[key] = {
-                        name: sheet.name,
-                        weekStart: weekStart,
-                        minutes: 0
-                    };
-                }
-                weeklyTotals[key].minutes += sheet.minutes;
-            });
-
-            // Update dropdown options
-            const weeks = [...new Set(timesheets.map(sheet => {
-                const startDate = new Date(sheet.start);
-                return getWeekStart(startDate).toDateString();
-            }))].sort();
-
-            weekFilter.innerHTML = '<option value="">all weeks</option>';
-            weeks.forEach(week => {
-                const option = document.createElement('option');
-                option.value = week;
-                option.textContent = `week of ${week}`;
-                if (week === selectedWeek) option.selected = true;
-                weekFilter.appendChild(option);
-            });
-
-            // Render filtered results
-            Object.values(weeklyTotals).forEach(total => {
-                const hours = Math.floor(total.minutes / 60);
-                const mins = total.minutes % 60;
-                const div = document.createElement('div');
-                div.innerHTML = `${total.name} - week of ${total.weekStart.toDateString()}: ${hours}h ${mins}m<br>`;
-                container.appendChild(div);
-            });
-}        function displayOverallTotals() {
-            const container = document.getElementById('overallTotals');
-            container.innerHTML = '';
-
-            const overallTotals = {};
-            
-            timesheets.forEach(sheet => {
-                if (!overallTotals[sheet.name]) {
-                    overallTotals[sheet.name] = 0;
-                }
-                overallTotals[sheet.name] += sheet.minutes;
-            });
-
-            Object.entries(overallTotals).forEach(([name, minutes]) => {
-                const hours = Math.floor(minutes / 60);
-                const mins = minutes % 60;
-                const div = document.createElement('div');
-                div.innerHTML = `${name}: ${hours}h ${mins}m total<br>`;
-                container.appendChild(div);
-            });
-        }
-
 
         function getWeekStart(date) {
             const d = new Date(date);

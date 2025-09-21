@@ -6,9 +6,11 @@
 <body>
     <h1>work tracker</h1>
     
-    <div id="nameInput">
-        <input type="text" id="name" placeholder="your name">
-        <button onclick="startWork()">start</button>
+    <div id="nameButtons">
+        <button onclick="startWork('Don')">Don</button>
+        <button onclick="startWork('Ten')">Ten</button>
+        <button onclick="startWork('An')">An</button>
+        <button onclick="startWork('🐧')">🐧</button>
     </div>
     
     <div id="workingState" style="display:none;">
@@ -34,9 +36,7 @@
         }
 
         displayTimesheets();
-
-        function startWork() {
-            const name = document.getElementById('name').value;
+        function startWork(name) {
             if (!name) return;
             
             const startTime = new Date();

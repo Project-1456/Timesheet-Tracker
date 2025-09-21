@@ -1,1 +1,1 @@
-
+Not as evil as can be timetracker, made because proprietary software is dogshit that doesn't even work.

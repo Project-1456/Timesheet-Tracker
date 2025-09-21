@@ -173,8 +173,11 @@
                 }) : timesheets;
 
             filteredSheets.forEach(sheet => {
+                const hours = Math.floor(sheet.minutes / 60);
+                const mins = sheet.minutes % 60;
+                const weekStart = getWeekStart(sheet.start)
                 const div = document.createElement('div');
-                div.innerHTML = `${sheet.name} - ${sheet.start} to ${sheet.end} (${sheet.minutes} mins)<br>`;
+                div.innerHTML = `${sheet.name} - week of ${weekStart.toDateString()}: ${hours}h ${mins}m<br>`;
                 container.appendChild(div);
             });
 

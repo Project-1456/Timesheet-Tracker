@@ -140,7 +140,8 @@
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
+                    },
+                    cache: 'no-store'
                 });
                 
                 if (response.ok) {
@@ -192,27 +193,27 @@
 
         function startWork(name) {
             const startTime = new Date();
-            const companyTime = new Date(startTime.toLocaleString("en-US", {timeZone: "Asia/Shanghai"}));
-            currentSession = { name, startTime: companyTime };
+
+            currentSession = { name, startTime: startTime.toISOString() };
             localStorage.setItem('currentSession', JSON.stringify(currentSession));
             
             document.getElementById('nameButtons').style.display = 'none';
             document.getElementById('workingState').style.display = 'block';
             document.getElementById('currentName').textContent = name;
-            document.getElementById('startTime').textContent = companyTime.toLocaleString();
+            document.getElementById('startTime').textContent = startTime.toLocaleString();
         }
 
         function endWork() {
             if (!currentSession) return;
-            
+
+            const startTime = new Date(currentSession.startTime);
             const endTime = new Date();
-            const companyEndTime = new Date(endTime.toLocaleString("en-US", {timeZone: "Asia/Shanghai"}));
-            const duration = Math.round((companyEndTime - currentSession.startTime) / 1000 / 60);
+            const duration = Math.round((endTime - startTime) / 1000 / 60);
             
             const entry = {
                 name: currentSession.name,
-                start: currentSession.startTime.toISOString(),
-                end: companyEndTime.toISOString(),
+                start: startTime.toISOString(),
+                end: endTime.toISOString(),
                 minutes: duration
             };
 

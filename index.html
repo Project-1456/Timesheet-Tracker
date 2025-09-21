@@ -11,6 +11,7 @@
         <button onclick="startWork('Ten')">Ten</button>
         <button onclick="startWork('An')">An</button>
         <button onclick="startWork('🐧')">🐧</button>
+        <button onclick="startWork('G')">G</button>
     </div>
     
     <div id="workingState" style="display:none;">
@@ -18,6 +19,9 @@
         <p>started: <span id="startTime"></span></p>
         <button onclick="endWork()">end</button>
     </div>
+    
+    <h2>weekly totals</h2>
+    <div id="weeklyTotals"></div>
     
     <h2>timesheets</h2>
     <div id="timesheets"></div>
@@ -29,25 +33,23 @@
         // restore session on load
         if (currentSession) {
             currentSession.startTime = new Date(currentSession.startTime);
-            document.getElementById('nameInput').style.display = 'none';
+            document.getElementById('nameButtons').style.display = 'none';
             document.getElementById('workingState').style.display = 'block';
             document.getElementById('currentName').textContent = currentSession.name;
             document.getElementById('startTime').textContent = currentSession.startTime.toLocaleString();
         }
 
         displayTimesheets();
+
         function startWork(name) {
-            if (!name) return;
-            
             const startTime = new Date();
             currentSession = { name, startTime };
             localStorage.setItem('currentSession', JSON.stringify(currentSession));
             
-            document.getElementById('nameInput').style.display = 'none';
+            document.getElementById('nameButtons').style.display = 'none';
             document.getElementById('workingState').style.display = 'block';
             document.getElementById('currentName').textContent = name;
             document.getElementById('startTime').textContent = startTime.toLocaleString();
-            document.getElementById('name').value = '';
         }
 
         function endWork() {
@@ -67,7 +69,7 @@
             localStorage.removeItem('currentSession');
             
             currentSession = null;
-            document.getElementById('nameInput').style.display = 'block';
+            document.getElementById('nameButtons').style.display = 'block';
             document.getElementById('workingState').style.display = 'none';
             
             displayTimesheets();
@@ -82,6 +84,45 @@
                 div.innerHTML = `${sheet.name} - ${sheet.start} to ${sheet.end} (${sheet.minutes} mins)<br>`;
                 container.appendChild(div);
             });
+
+            displayWeeklyTotals();
+        }
+
+        function displayWeeklyTotals() {
+            const container = document.getElementById('weeklyTotals');
+            container.innerHTML = '';
+
+            const weeklyTotals = {};
+            
+            timesheets.forEach(sheet => {
+                const startDate = new Date(sheet.start);
+                const weekStart = getWeekStart(startDate);
+                const weekKey = `${sheet.name}-${weekStart.toDateString()}`;
+                
+                if (!weeklyTotals[weekKey]) {
+                    weeklyTotals[weekKey] = {
+                        name: sheet.name,
+                        weekStart: weekStart,
+                        minutes: 0
+                    };
+                }
+                weeklyTotals[weekKey].minutes += sheet.minutes;
+            });
+
+            Object.values(weeklyTotals).forEach(total => {
+                const hours = Math.floor(total.minutes / 60);
+                const mins = total.minutes % 60;
+                const div = document.createElement('div');
+                div.innerHTML = `${total.name} - week of ${total.weekStart.toDateString()}: ${hours}h ${mins}m<br>`;
+                container.appendChild(div);
+            });
+        }
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day;
+            return new Date(d.setDate(diff));
         }
     </script>
 </body>

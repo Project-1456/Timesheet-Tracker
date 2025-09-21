@@ -24,11 +24,13 @@
         
         #nameButtons {
             display: flex;
-            gap: 10px;
             justify-content: center;
+            gap: 10px;
             margin: 20px 0;
-        }
-        
+            flex-wrap: wrap;     /* ensures buttons wrap neatly instead of pushing */
+            text-align: center;  /* extra centering for good measure */
+            width: 100%;         /* keeps it full width */
+        }        
         button {
             padding: 12px 20px;
             font-size: 16px;
@@ -84,8 +86,8 @@
     
     <!-- Add your Supabase details here -->
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+        const SUPABASE_URL = 'https://agjdexqndumwhrinvpxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnamRleHFuZHVtd2hyaW52cHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MjI2MzEsImV4cCI6MjA3Mzk5ODYzMX0.EFgk42kWdO2gi2yK8DnLZaMzUlPzZT3jIC3g9ZlK4Z4';
     </script>
     
     <div id="nameButtons">

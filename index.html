@@ -21,9 +21,18 @@
     </div>
     
     <h2>weekly totals</h2>
+    <select id="weeklyFilter" onchange="displayWeeklyTotals()">
+        <option value="">all weeks</option>
+    </select>
     <div id="weeklyTotals"></div>
     
+    <h2>overall totals</h2>
+    <div id="overallTotals"></div>
+    
     <h2>timesheets</h2>
+    <select id="weekFilter" onchange="displayTimesheets()">
+        <option value="">all weeks</option>
+    </select>
     <div id="timesheets"></div>
 
     <script>
@@ -79,15 +88,63 @@
 
         function displayTimesheets() {
             const container = document.getElementById('timesheets');
+            const weekFilter = document.getElementById('weekFilter');
+            const selectedWeek = weekFilter.value;
+            
             container.innerHTML = '';
             
-            timesheets.forEach(sheet => {
+            // Update week dropdown options
+            const weeks = [...new Set(timesheets.map(sheet => {
+                const startDate = new Date(sheet.start);
+                return getWeekStart(startDate).toDateString();
+            }))].sort();
+            
+            weekFilter.innerHTML = '<option value="">all weeks</option>';
+            weeks.forEach(week => {
+                const option = document.createElement('option');
+                option.value = week;
+                option.textContent = `week of ${week}`;
+                if (week === selectedWeek) option.selected = true;
+                weekFilter.appendChild(option);
+            });
+            
+            // Filter timesheets by selected week
+            const filteredSheets = selectedWeek ? 
+                timesheets.filter(sheet => {
+                    const startDate = new Date(sheet.start);
+                    return getWeekStart(startDate).toDateString() === selectedWeek;
+                }) : timesheets;
+            
+            filteredSheets.forEach(sheet => {
                 const div = document.createElement('div');
                 div.innerHTML = `${sheet.name} - ${sheet.start} to ${sheet.end} (${sheet.minutes} mins)<br>`;
                 container.appendChild(div);
             });
 
             displayWeeklyTotals();
+            displayOverallTotals();
+        }
+
+        function displayOverallTotals() {
+            const container = document.getElementById('overallTotals');
+            container.innerHTML = '';
+
+            const overallTotals = {};
+            
+            timesheets.forEach(sheet => {
+                if (!overallTotals[sheet.name]) {
+                    overallTotals[sheet.name] = 0;
+                }
+                overallTotals[sheet.name] += sheet.minutes;
+            });
+
+            Object.entries(overallTotals).forEach(([name, minutes]) => {
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                const div = document.createElement('div');
+                div.innerHTML = `${name}: ${hours}h ${mins}m total<br>`;
+                container.appendChild(div);
+            });
         }
 
         function displayWeeklyTotals() {

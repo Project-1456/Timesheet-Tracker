@@ -209,7 +209,10 @@
 
             filteredSheets.forEach(sheet => {
                 const div = document.createElement('div');
-                div.innerHTML = `${sheet.name} - ${new Date(sheet.start).toLocaleString()} to ${new Date(sheet.end).toLocaleString()} (${sheet.minutes} mins)<br>`;                container.appendChild(div);
+                const hours = Math.floor(sheet.minutes / 60);
+                const mins = sheet.minutes % 60;
+                div.innerHTML = `${sheet.name} - ${new Date(sheet.start).toLocaleString()} to ${new Date(sheet.end).toLocaleString()}: ${hours}h ${mins}m<br>`;
+                container.appendChild(div);
             });
 
             displayWeeklyTotals();

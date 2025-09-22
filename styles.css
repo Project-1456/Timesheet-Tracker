@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+h2 {
+    color: #666;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+}
+
+#nameButtons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;     /* ensures buttons wrap neatly instead of pushing */
+    text-align: center;  /* extra centering for good measure */
+    width: 100%;         /* keeps it full width */
+}        
+button {
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007cba;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #005a8a;
+}
+
+#workingState {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+select {
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: white;
+}
+
+#weeklyTotals, #timesheets, #overallTotals {
+    background-color: white;
+    border-radius: 5px;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#weeklyTotals div, #timesheets div, #overallTotals div {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+#weeklyTotals div:last-child, #timesheets div:last-child, #overallTotals div:last-child {
+    border-bottom: none;
+}
+#manualEntry {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 15px;
+    margin: 10px 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#manualEntry input[type="datetime-local"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: white;
+}

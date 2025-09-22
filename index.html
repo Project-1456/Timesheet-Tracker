@@ -79,6 +79,24 @@
         #weeklyTotals div:last-child, #timesheets div:last-child, #overallTotals div:last-child {
             border-bottom: none;
         }
+        #manualEntry {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        #manualEntry input[type="datetime-local"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background-color: white;
+        }
     </style>
 </head>
 <body>
@@ -119,6 +137,22 @@
     <h2>overall totals</h2>
     <div id="overallTotals"></div>
 
+
+    <h2>manual entry</h2>
+    <div id="manualEntry">
+        <select id="manualName">
+            <option value="">select person</option>
+            <option value="Don">Don</option>
+            <option value="Ten">Ten</option>
+            <option value="An">An</option>
+            <option value="🐧">🐧</option>
+            <option value="G">G</option>
+        </select>
+        <input type="datetime-local" id="manualStart" placeholder="start time">
+        <input type="datetime-local" id="manualEnd" placeholder="end time">
+        <button onclick="addManualEntry()">add entry</button>
+    </div>
+
     <script>
         let timesheets = [];
         let currentSession = JSON.parse(localStorage.getItem('currentSession') || 'null');
@@ -133,6 +167,22 @@
         }
 
         loadTimesheets();
+        setDefaultTimes();
+
+        function setDefaultTimes() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            
+            // Set start time to 9 AM today
+            const startDefault = `${year}-${month}-${day}T09:00`;
+            document.getElementById('manualStart').value = startDefault;
+            
+            // Set end time to 5 PM today
+            const endDefault = `${year}-${month}-${day}T17:00`;
+            document.getElementById('manualEnd').value = endDefault;
+        }
 
         async function loadTimesheets() {
             try {
@@ -338,6 +388,42 @@
             const diff = d.getDate() - day;
             return new Date(d.setDate(diff));
         }
+
+        function addManualEntry() {
+            const name = document.getElementById('manualName').value;
+            const startTime = document.getElementById('manualStart').value;
+            const endTime = document.getElementById('manualEnd').value;
+            
+            if (!name || !startTime || !endTime) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            
+            if (end <= start) {
+                alert('End time must be after start time');
+                return;
+            }
+            
+            const duration = Math.round((end - start) / 1000 / 60);
+            
+            const entry = {
+                name: name,
+                start: start.toISOString(),
+                end: end.toISOString(),
+                minutes: duration
+            };
+
+            saveTimesheet(entry);
+
+            // Clear the form
+            document.getElementById('manualName').value = '';
+            document.getElementById('manualStart').value = '';
+            document.getElementById('manualEnd').value = '';
+        }
+
     </script>
 </body>
 </html>
